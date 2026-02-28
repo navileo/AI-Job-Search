@@ -12,17 +12,15 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="AI Job Agent",
     page_icon="💼",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # Global styles
 st.markdown(
     """
     <style>
-      /* Hide Streamlit header/menu/branding */
-      #MainMenu {visibility: hidden;}
-      header {visibility: hidden;}
-      footer {visibility: hidden;}
+      /* Keep default Streamlit header/menu visible; branding ribbon hidden below */
 
       .job-card {
         background: #ffffff;
@@ -97,6 +95,9 @@ st.markdown(
       a[href*="streamlit.io/cloud"] { display:none !important; }
       a[href*="streamlit.io/?ref"] { display:none !important; }
       div[style*="position: fixed"][style*="right"][style*="bottom"] a[role="link"] { display:none !important; }
+      div[style*="position: fixed"][style*="right"][style*="bottom"] { display:none !important; }
+      /* Explicitly hide the Streamlit main menu (Settings etc.) */
+      #MainMenu { visibility: hidden !important; height: 0 !important; overflow: hidden !important; pointer-events: none !important; }
     </style>
     """,
     unsafe_allow_html=True
