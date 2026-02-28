@@ -86,6 +86,17 @@ st.markdown(
       .share-li { background:#0a66c2; }
       .share-hn { background:#ff6600; color:#000 !important; }
       .copy-link { background:#334155; }
+
+      /* Extra: hide Streamlit Cloud top-right avatar/toolbar overlays */
+      .stApp [data-testid="stToolbar"] { display: none !important; }
+      .stApp [data-testid="stStatusWidget"] { display: none !important; }
+      .stApp [data-testid="stDecoration"] { display: none !important; }
+      body > div[style*="position: fixed"][style*="top: 0"][style*="right: 0"] { display:none !important; }
+      a[aria-label="Hosted with Streamlit"] { display:none !important; }
+      a[title="Hosted with Streamlit"] { display:none !important; }
+      a[href*="streamlit.io/cloud"] { display:none !important; }
+      a[href*="streamlit.io/?ref"] { display:none !important; }
+      div[style*="position: fixed"][style*="right"][style*="bottom"] a[role="link"] { display:none !important; }
     </style>
     """,
     unsafe_allow_html=True
