@@ -1,0 +1,12 @@
+venv/
+.env
+.streamlit/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+*.pdf
+*.docx
+test_*.py
+verify_*.py
+*.bat

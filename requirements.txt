@@ -1,0 +1,6 @@
+google-generativeai
+pypdf
+streamlit
+ddgs
+uv
+python-dotenv
