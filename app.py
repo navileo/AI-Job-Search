@@ -6,7 +6,6 @@ from job_search import search_jobs
 from agent_logic import configure_gemini, analyze_and_optimize_resume, generate_cover_letter
 from export_utils import markdown_to_docx, markdown_to_pdf
 from html import escape
-import streamlit.components.v1 as components
 
 # Page Configuration
 st.set_page_config(
@@ -85,23 +84,13 @@ st.markdown(
       .share-hn { background:#ff6600; color:#000 !important; }
       .copy-link { background:#334155; }
 
-      /* Extra: hide Streamlit Cloud top-right avatar/toolbar overlays */
-      .stApp [data-testid="stToolbar"] { display: none !important; }
-      .stApp [data-testid="stStatusWidget"] { display: none !important; }
-      .stApp [data-testid="stDecoration"] { display: none !important; }
-      body > div[style*="position: fixed"][style*="top: 0"][style*="right: 0"] { display:none !important; }
-      a[aria-label="Hosted with Streamlit"] { display:none !important; }
-      a[title="Hosted with Streamlit"] { display:none !important; }
-      a[href*="streamlit.io/cloud"] { display:none !important; }
-      a[href*="streamlit.io/?ref"] { display:none !important; }
-      div[style*="position: fixed"][style*="right"][style*="bottom"] a[role="link"] { display:none !important; }
-      div[style*="position: fixed"][style*="right"][style*="bottom"] { display:none !important; }
-      /* Explicitly hide the Streamlit main menu (Settings etc.) */
-      #MainMenu { visibility: hidden !important; height: 0 !important; overflow: hidden !important; pointer-events: none !important; }
+      /* No global UI elements are hidden; keeping Streamlit menu and sidebar visible */
     </style>
     """,
     unsafe_allow_html=True
 )
+
+ 
 
 # Initialize Session State
 if 'jobs' not in st.session_state:
@@ -169,43 +158,7 @@ with st.sidebar:
     else:
         st.success("✅ API Key Configured")
 
-    with st.expander("Share"):
-        default_url = ""
-        try:
-            default_url = st.secrets.get("APP_URL", "")
-        except Exception:
-            default_url = ""
-        app_url = st.text_input("App URL", value=default_url, placeholder="https://your-app.streamlit.app")
-        share_text = st.text_input("Message", value="Check out AI Job Agent")
-        if app_url:
-            tw = f"https://twitter.com/intent/tweet?text={escape(share_text)}&url={escape(app_url)}"
-            li = f"https://www.linkedin.com/sharing/share-offsite/?url={escape(app_url)}"
-            hn = f"https://news.ycombinator.com/submitlink?u={escape(app_url)}&t={escape(share_text)}"
-            st.markdown(
-                f"""
-                <div class="share-wrap">
-                  <a class="share-btn share-tw" href="{tw}" target="_blank" rel="noopener noreferrer">Twitter</a>
-                  <a class="share-btn share-li" href="{li}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                  <a class="share-btn share-hn" href="{hn}" target="_blank" rel="noopener noreferrer">Hacker News</a>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            components.html(f"""
-            <button id="copyBtn" style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#334155;color:#fff;border:none;font-weight:700;cursor:pointer;">
-              Copy link
-            </button>
-            <script>
-              const btn = document.getElementById('copyBtn');
-              btn.addEventListener('click', async () => {{
-                try {{
-                  await navigator.clipboard.writeText('{app_url}');
-                  btn.textContent = 'Copied';
-                  setTimeout(()=>btn.textContent='Copy link', 1500);
-                }} catch (e) {{}}
-              }});
-            </script>
-            """, height=50)
+    # Share panel removed per request
 
 # Main Content
 tab1, tab2, tab3 = st.tabs(["🔍 Job Search", "📝 Resume Optimizer", "✉️ Cover Letter"])
