@@ -5,12 +5,90 @@ from pypdf import PdfReader
 from job_search import search_jobs
 from agent_logic import configure_gemini, analyze_and_optimize_resume, generate_cover_letter
 from export_utils import markdown_to_docx, markdown_to_pdf
+from html import escape
+import streamlit.components.v1 as components
 
 # Page Configuration
 st.set_page_config(
     page_title="AI Job Agent",
     page_icon="💼",
     layout="wide"
+)
+
+# Global styles
+st.markdown(
+    """
+    <style>
+      /* Hide Streamlit header/menu/branding */
+      #MainMenu {visibility: hidden;}
+      header {visibility: hidden;}
+      footer {visibility: hidden;}
+
+      .job-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        transition: box-shadow .2s ease, border-color .2s ease, transform .05s ease;
+      }
+      .job-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+        border-color: #cbd5e1;
+      }
+      .job-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin: 0 0 4px 0;
+      }
+      .job-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: .2px;
+      }
+      .badge-linkedin { background: #eef2ff; color: #3730a3; }
+      .badge-indeed { background: #ecfeff; color: #155e75; }
+      .badge-naukri, .badge-foundit { background: #f0f9ff; color: #075985; }
+      .badge-glassdoor { background: #f0fdf4; color: #166534; }
+      .badge-default { background: #f5f5f5; color: #374151; }
+      .job-snippet {
+        color: #475569;
+        margin: 0 0 12px 0;
+        line-height: 1.45;
+      }
+      .link-btn {
+        display: inline-block;
+        text-decoration: none;
+        background: #2563eb;
+        color: #ffffff !important;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: background .15s ease;
+      }
+      .link-btn:hover { background: #1d4ed8; }
+      .share-wrap { display:flex; gap:10px; flex-wrap: wrap; }
+      .share-btn {
+        display:inline-flex; align-items:center; gap:8px;
+        padding:8px 12px; border-radius:999px; color:#fff !important; text-decoration:none; font-weight:700;
+      }
+      .share-tw { background:#1da1f2; }
+      .share-li { background:#0a66c2; }
+      .share-hn { background:#ff6600; color:#000 !important; }
+      .copy-link { background:#334155; }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 # Initialize Session State
@@ -79,6 +157,44 @@ with st.sidebar:
     else:
         st.success("✅ API Key Configured")
 
+    with st.expander("Share"):
+        default_url = ""
+        try:
+            default_url = st.secrets.get("APP_URL", "")
+        except Exception:
+            default_url = ""
+        app_url = st.text_input("App URL", value=default_url, placeholder="https://your-app.streamlit.app")
+        share_text = st.text_input("Message", value="Check out AI Job Agent")
+        if app_url:
+            tw = f"https://twitter.com/intent/tweet?text={escape(share_text)}&url={escape(app_url)}"
+            li = f"https://www.linkedin.com/sharing/share-offsite/?url={escape(app_url)}"
+            hn = f"https://news.ycombinator.com/submitlink?u={escape(app_url)}&t={escape(share_text)}"
+            st.markdown(
+                f"""
+                <div class="share-wrap">
+                  <a class="share-btn share-tw" href="{tw}" target="_blank" rel="noopener noreferrer">Twitter</a>
+                  <a class="share-btn share-li" href="{li}" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                  <a class="share-btn share-hn" href="{hn}" target="_blank" rel="noopener noreferrer">Hacker News</a>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            components.html(f"""
+            <button id="copyBtn" style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#334155;color:#fff;border:none;font-weight:700;cursor:pointer;">
+              Copy link
+            </button>
+            <script>
+              const btn = document.getElementById('copyBtn');
+              btn.addEventListener('click', async () => {{
+                try {{
+                  await navigator.clipboard.writeText('{app_url}');
+                  btn.textContent = 'Copied';
+                  setTimeout(()=>btn.textContent='Copy link', 1500);
+                }} catch (e) {{}}
+              }});
+            </script>
+            """, height=50)
+
 # Main Content
 tab1, tab2, tab3 = st.tabs(["🔍 Job Search", "📝 Resume Optimizer", "✉️ Cover Letter"])
 
@@ -90,12 +206,14 @@ with tab1:
     with col1:
         query = st.text_input("Job Title / Keywords", placeholder="e.g. Python Developer, Data Scientist")
     with col2:
-        location = st.text_input("Location", value="India", placeholder="e.g. Remote, Bangalore")
+        location = st.text_input("Location", value="India", placeholder="e.g. Bangalore, India")
+        remote_only = st.checkbox("Remote only", value=False)
     
     if st.button("Search Jobs", type="primary"):
         if query:
             with st.spinner(f"Searching for '{query}' in '{location}'..."):
-                jobs = search_jobs(query, location)
+                loc = (location or "").strip() or "India"
+                jobs = search_jobs(query, loc, remote_only=remote_only)
                 st.session_state.jobs = jobs
             
             if not jobs:
@@ -109,14 +227,34 @@ with tab1:
         
         for job in st.session_state.jobs:
             with st.container():
-                st.markdown(f"""
-                <div style="padding: 1rem; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 1rem; background-color: #f9f9f9; color: #333333;">
-                    <h3 style="margin-top: 0; color: #000000;">{job['title']}</h3>
-                    <p style="color: #333333;"><strong>Platform:</strong> {job['platform']}</p>
-                    <p style="color: #555555;">{job['snippet'][:200]}...</p>
-                    <a href="{job['link']}" target="_blank" style="text-decoration: none; color: #007bff; font-weight: bold;">View Job Posting ↗</a>
-                </div>
-                """, unsafe_allow_html=True)
+                title = escape(job.get('title', 'Untitled'))
+                platform = (job.get('platform') or 'Other').strip()
+                platform_key = platform.lower()
+                badge_class = {
+                    'linkedin': 'badge-linkedin',
+                    'indeed': 'badge-indeed',
+                    'naukri': 'badge-naukri',
+                    'foundit': 'badge-foundit',
+                    'glassdoor': 'badge-glassdoor',
+                }.get(platform_key, 'badge-default')
+                snippet = escape((job.get('snippet') or '')[:220]).rstrip()
+                if snippet and not snippet.endswith('...'):
+                    snippet += '...'
+                link = job.get('link') or '#'
+                
+                st.markdown(
+                    f"""
+                    <div class="job-card">
+                      <div class="job-title">{title}</div>
+                      <div class="job-meta">
+                        <span class="badge {badge_class}">{escape(platform.title())}</span>
+                      </div>
+                      <p class="job-snippet">{snippet}</p>
+                      <a class="link-btn" href="{link}" target="_blank" rel="noopener noreferrer">View Job Posting ↗</a>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
 # Tab 2: Resume Optimizer
 with tab2:

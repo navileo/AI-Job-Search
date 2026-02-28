@@ -2,7 +2,7 @@ import random
 import time
 from ddgs import DDGS
 
-def search_jobs(query, location="India", max_results=15):
+def search_jobs(query, location="India", max_results=15, remote_only=False):
     """
     Searches for jobs on LinkedIn, Indeed, Glassdoor, and Naukri using DuckDuckGo (via ddgs).
     
@@ -16,33 +16,49 @@ def search_jobs(query, location="India", max_results=15):
     """
     print(f"Searching for '{query}' in '{location}' using DuckDuckGo...")
     all_jobs = []
-    
-    # Define platform-specific keywords
-    platforms = [
-        "linkedin",
-        "indeed",
-        "glassdoor",
-        "naukri"
-    ]
-    
-    # Calculate results per platform (distribute evenly)
+
+    platforms = {
+        "linkedin": "site:linkedin.com/jobs",
+        "indeed": "site:indeed.com",
+        "glassdoor": "site:glassdoor.com",
+        "naukri": "site:naukri.com"
+    }
+
+    def map_region(loc):
+        if not loc:
+            return None
+        key = loc.strip().lower()
+        if "india" in key or key in {"in", "bharat"}:
+            return "in-en"
+        if "united states" in key or key in {"us", "usa"} or "america" in key:
+            return "us-en"
+        if "united kingdom" in key or key in {"uk", "gb"} or "england" in key:
+            return "gb-en"
+        if "canada" in key or key == "ca":
+            return "ca-en"
+        if "australia" in key or key == "au":
+            return "au-en"
+        if "germany" in key or key in {"de", "deutschland"}:
+            return "de-de"
+        return None
+
     results_per_platform = max(2, max_results // len(platforms))
-    
+    region = map_region(location)
+
     try:
         with DDGS() as ddgs:
-            for platform in platforms:
-                search_query = f"{query} {location} {platform} jobs"
+            for platform, site in platforms.items():
+                base_terms = f"\"{query}\""
+                if location:
+                    base_terms += f" \"{location}\""
+                if remote_only:
+                    base_terms += " (\"remote\" OR \"work from home\")"
+                search_query = f"{site} {base_terms} jobs"
                 print(f"  - Searching {platform}...")
-                
                 try:
-                    # Use ddgs.text() which returns a generator of results
-                    # We limit to results_per_platform
-                    # Note: max_results in ddgs.text is the max number of results to return from the generator
-                    results = ddgs.text(search_query, max_results=results_per_platform)
-                    
+                    results = ddgs.text(search_query, region=region, max_results=results_per_platform)
                     count = 0
                     for result in results:
-                        # Create a job object
                         job = {
                             "title": result.get("title", "No Title"),
                             "link": result.get("href", "#"),
@@ -51,19 +67,14 @@ def search_jobs(query, location="India", max_results=15):
                         }
                         all_jobs.append(job)
                         count += 1
-                    
                     if count == 0:
                         print(f"    No results for {platform}")
                     else:
                         print(f"    Found {count} results for {platform}")
-
-                    # Be polite to the search engine (though DDGS handles some rate limiting)
                     time.sleep(random.uniform(1, 2))
-                    
                 except Exception as e:
                     print(f"Error searching {platform}: {e}")
                     continue
-                    
     except Exception as e:
         print(f"Fatal error initializing DDGS: {e}")
         return []
