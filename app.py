@@ -4,7 +4,7 @@ import io
 from pypdf import PdfReader
 from job_search import search_jobs
 from agent_logic import configure_gemini, analyze_and_optimize_resume, generate_cover_letter
-from export_utils import markdown_to_docx, markdown_to_pdf
+from export_utils import markdown_to_docx
 from html import escape
 
 # Page Configuration
@@ -265,7 +265,7 @@ with tab2:
                             st.markdown(result)
                             
                             # Download Buttons
-                            col_d1, col_d2, col_d3 = st.columns(3)
+                            col_d1, col_d2 = st.columns(2)
                             
                             with col_d1:
                                 st.download_button(
@@ -284,17 +284,7 @@ with tab2:
                                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                 )
                                 
-                            with col_d3:
-                                try:
-                                    pdf_file = markdown_to_pdf(result)
-                                    st.download_button(
-                                        label="Download PDF",
-                                        data=pdf_file,
-                                        file_name="optimized_resume.pdf",
-                                        mime="application/pdf"
-                                    )
-                                except Exception as e:
-                                    st.error(f"PDF generation failed: {e}")
+                            
 
 # Tab 3: Cover Letter Generator
 with tab3:
@@ -353,7 +343,7 @@ with tab3:
                         st.markdown(result)
                         
                         # Download Buttons
-                        col_c1, col_c2, col_c3 = st.columns(3)
+                        col_c1, col_c2 = st.columns(2)
                         
                         with col_c1:
                             st.download_button(
@@ -372,17 +362,7 @@ with tab3:
                                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                             )
                             
-                        with col_c3:
-                            try:
-                                pdf_file = markdown_to_pdf(result)
-                                st.download_button(
-                                    label="Download PDF",
-                                    data=pdf_file,
-                                    file_name="cover_letter.pdf",
-                                    mime="application/pdf"
-                                )
-                            except Exception as e:
-                                st.error(f"PDF generation failed: {e}")
+                        
 
 # Footer
 st.divider()
