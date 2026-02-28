@@ -4,3 +4,5 @@ streamlit
 ddgs
 uv
 python-dotenv
+python-docx
+fpdf2
