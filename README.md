@@ -8,6 +8,10 @@ This is an AI-powered job search agent that helps you find jobs and optimize you
 - LaTeX-style PDF layout using fpdf2: centered header, section rules, right-aligned dates.
 - Clickable links: extracts hyperlinks from uploaded PDF and reuses them in the output.
 - Export to PDF and DOCX with safe Latin‑1 sanitization (prevents “?” symbols).
+**Live demo**
+```bash
+ https://ai-job-search-dipjapkvtuazektkta68wf.streamlit.app/
+```
 
 ## Setup
 
